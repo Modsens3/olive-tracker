@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  base: '/olive-tracker/',
   plugins: [
     react(),
     VitePWA({
@@ -15,6 +16,8 @@ export default defineConfig({
         theme_color: '#3f6212',
         background_color: '#ffffff',
         display: 'standalone',
+        scope: '/olive-tracker/',
+        start_url: '/olive-tracker/',
         icons: [
           {
             src: 'pwa-192x192.png',
