@@ -205,7 +205,8 @@ export default function TreeForm({ initialData, onSave, onCancel, onDelete, isNe
                         e.stopPropagation();
                         setPhotoUrl(undefined);
                     }}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 hidden"
+                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 flex items-center justify-center z-10"
+                    title="Διαγραφή Φωτογραφίας"
                 >
                     <X size={16} />
                 </button>

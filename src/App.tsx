@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Download, Sprout, Filter, Upload, BarChart3, Wallet, Calendar, X } from 'lucide-react';
+import { Download, Sprout, Filter, Upload, BarChart3, Wallet, Calendar, X, Menu } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import QRCode from "react-qr-code";
 import { AnimatePresence, motion } from 'framer-motion';
@@ -45,6 +45,9 @@ export default function App() {
   // Map Drawing/Measure State
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [isMeasureMode, setIsMeasureMode] = useState(false);
+
+  // Mobile Menu State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Filters
   const [showFilters, setShowFilters] = useState(false);
@@ -245,14 +248,16 @@ export default function App() {
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-50 dark:bg-slate-900 overflow-hidden transition-colors duration-300">
       {/* Header */}
-      <header className="bg-lime-800 dark:bg-lime-950 text-white p-4 shadow-md flex justify-between items-center z-10 relative transition-colors duration-300">
+      <header className="bg-lime-800 dark:bg-lime-950 text-white p-4 shadow-md flex justify-between items-center z-20 relative transition-colors duration-300">
         <div className="flex items-center gap-2">
             <Sprout size={24} />
-            <h1 className="text-xl font-bold hidden sm:block">Olive Tracker</h1>
+            <h1 className="text-xl font-bold hidden md:block">Olive Tracker</h1>
             {userLocation && <WeatherWidget lat={userLocation.lat} lng={userLocation.lng} />}
             {!userLocation && trees.length > 0 && <WeatherWidget lat={trees[0].lat} lng={trees[0].lng} />}
         </div>
-        <div className="flex gap-2 items-center">
+        
+        {/* Desktop Menu */}
+        <div className="hidden md:flex gap-2 items-center">
             <ThemeToggle />
             <div className="h-8 w-px bg-lime-600 mx-1"></div>
             <button  
@@ -286,14 +291,7 @@ export default function App() {
             >
                 <Upload size={20} />
             </button>
-            <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleImport} 
-                accept=".json" 
-                className="hidden" 
-            />
-
+            
             <button 
                 onClick={exportData} 
                 className="bg-lime-700 hover:bg-lime-600 p-2 rounded-md flex items-center gap-2 text-sm"
@@ -302,6 +300,90 @@ export default function App() {
                 <Download size={20} />
             </button>
         </div>
+
+        {/* Mobile Menu Button */}
+        <div className="flex md:hidden gap-2 items-center">
+             <ThemeToggle />
+             <button 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+                className="p-2 hover:bg-lime-700 rounded-md transition-colors"
+             >
+                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+             </button>
+        </div>
+
+        {/* Hidden Input for Import */}
+        <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleImport} 
+            accept=".json" 
+            className="hidden" 
+        />
+
+        {/* Mobile Menu Dropdown */}
+        <AnimatePresence>
+            {isMobileMenuOpen && (
+                <>
+                    <motion.div
+                        key="backdrop"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="fixed inset-0 bg-black/20 z-[-1] md:hidden backdrop-blur-sm"
+                    />
+                    <motion.div
+                        key="mobile-menu"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="absolute top-full left-0 right-0 bg-lime-800 dark:bg-lime-950 shadow-lg md:hidden border-t border-lime-700 dark:border-lime-900 overflow-hidden z-10"
+                    >
+                        <div className="flex flex-col p-2 gap-1">
+                        <button 
+                            onClick={() => { setShowStats(true); setIsMobileMenuOpen(false); }} 
+                            className="flex items-center gap-3 p-3 hover:bg-lime-700 rounded-lg transition-colors text-left"
+                        >
+                            <BarChart3 size={20} /> 
+                            <span className="font-medium">Στατιστικά</span>
+                        </button>
+                        <button 
+                            onClick={() => { setShowEconomics(true); setIsMobileMenuOpen(false); }} 
+                            className="flex items-center gap-3 p-3 hover:bg-lime-700 rounded-lg transition-colors text-left"
+                        >
+                            <Wallet size={20} /> 
+                            <span className="font-medium">Οικονομικά</span>
+                        </button>
+                        <button 
+                            onClick={() => { setShowFilters(!showFilters); setIsMobileMenuOpen(false); }} 
+                            className={`flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${showFilters ? 'bg-lime-100 text-lime-900' : 'hover:bg-lime-700'}`}
+                        >
+                            <Filter size={20} /> 
+                            <span className="font-medium">{showFilters ? 'Απόκρυψη Φίλτρων' : 'Εμφάνιση Φίλτρων'}</span>
+                        </button>
+                        
+                        <div className="h-px w-full bg-lime-700/50 my-1"></div>
+                        
+                        <button 
+                            onClick={() => { fileInputRef.current?.click(); setIsMobileMenuOpen(false); }} 
+                            className="flex items-center gap-3 p-3 hover:bg-lime-700 rounded-lg transition-colors text-left"
+                        >
+                            <Upload size={20} /> 
+                            <span className="font-medium">Εισαγωγή Backup</span>
+                        </button>
+                        <button 
+                            onClick={() => { exportData(); setIsMobileMenuOpen(false); }} 
+                            className="flex items-center gap-3 p-3 hover:bg-lime-700 rounded-lg transition-colors text-left"
+                        >
+                            <Download size={20} /> 
+                            <span className="font-medium">Εξαγωγή Backup</span>
+                        </button>
+                    </div>
+                    </motion.div>
+                </>
+            )}
+        </AnimatePresence>
       </header>
 
       {/* Filter Panel */}
