@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { OliveTree } from '../types';
@@ -20,12 +20,35 @@ L.Marker.prototype.options.icon = DefaultIcon;
 // Component για να κεντράρει το χάρτη στην τοποθεσία του χρήστη
 function LocationMarker({ onLocationFound }: { onLocationFound: (lat: number, lng: number) => void }) {
   const map = useMap();
+  const firstFound = useRef(false);
 
   useEffect(() => {
-    map.locate().on("locationfound", function (e) {
-      map.flyTo(e.latlng, 18);
-      onLocationFound(e.latlng.lat, e.latlng.lng);
+    map.locate({
+      watch: true,
+      enableHighAccuracy: true,
+      maximumAge: 10000 // Δέξου θέση έως 10 δευτερόλεπτα παλιά για ταχύτητα
     });
+
+    const handleLocationFound = (e: L.LocationEvent) => {
+      onLocationFound(e.latlng.lat, e.latlng.lng);
+      if (!firstFound.current) {
+        map.flyTo(e.latlng, 18);
+        firstFound.current = true;
+      }
+    };
+
+    const handleLocationError = (e: L.ErrorEvent) => {
+      console.warn("GPS Error:", e.message);
+    };
+
+    map.on("locationfound", handleLocationFound);
+    map.on("locationerror", handleLocationError);
+
+    return () => {
+      map.stopLocate();
+      map.off("locationfound", handleLocationFound);
+      map.off("locationerror", handleLocationError);
+    };
   }, [map]);
 
   return null;
