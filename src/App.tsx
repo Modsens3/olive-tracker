@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Download, Sprout, Filter, Upload, BarChart3, Wallet, Calendar, X, Menu } from 'lucide-react';
+import { Download, Sprout, Filter, Upload, BarChart3, Wallet, Calendar, X, Menu, FileSpreadsheet } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import QRCode from "react-qr-code";
 import { AnimatePresence, motion } from 'framer-motion';
@@ -11,6 +11,7 @@ import Economics from './components/Economics';
 import BulkActions from './components/BulkActions';
 import WeatherWidget from './components/WeatherWidget';
 import ThemeToggle from './components/ThemeToggle';
+import { exportToExcel } from './utils/excelExport';
 import { OliveTree, TreeVariety, TreeHealth, TaskType, Transaction, Field } from './types';
 
 export default function App() {
@@ -241,6 +242,16 @@ export default function App() {
     linkElement.click();
   };
 
+  const handleExcelExport = async () => {
+    try {
+        await exportToExcel(trees, transactions, fields);
+        toast.success('Το αρχείο Excel δημιουργήθηκε επιτυχώς!');
+    } catch (error) {
+        console.error('Export error:', error);
+        toast.error('Σφάλμα κατά την εξαγωγή σε Excel.');
+    }
+  };
+
   const totalYield = filteredTrees.reduce((acc, curr) => acc + curr.yieldEstimate, 0);
 
   const editingTree = editingTreeId ? trees.find(t => t.id === editingTreeId) : undefined;
@@ -295,9 +306,17 @@ export default function App() {
             <button 
                 onClick={exportData} 
                 className="bg-lime-700 hover:bg-lime-600 p-2 rounded-md flex items-center gap-2 text-sm"
-                title="Εξαγωγή Backup"
+                title="Εξαγωγή Backup (JSON)"
             >
                 <Download size={20} />
+            </button>
+
+            <button 
+                onClick={handleExcelExport} 
+                className="bg-green-700 hover:bg-green-600 p-2 rounded-md flex items-center gap-2 text-sm"
+                title="Εξαγωγή Excel"
+            >
+                <FileSpreadsheet size={20} />
             </button>
         </div>
 
@@ -377,7 +396,14 @@ export default function App() {
                             className="flex items-center gap-3 p-3 hover:bg-lime-700 rounded-lg transition-colors text-left"
                         >
                             <Download size={20} /> 
-                            <span className="font-medium">Εξαγωγή Backup</span>
+                            <span className="font-medium">Εξαγωγή Backup (JSON)</span>
+                        </button>
+                        <button 
+                            onClick={() => { handleExcelExport(); setIsMobileMenuOpen(false); }} 
+                            className="flex items-center gap-3 p-3 hover:bg-lime-700 rounded-lg transition-colors text-left"
+                        >
+                            <FileSpreadsheet size={20} /> 
+                            <span className="font-medium">Εξαγωγή Excel</span>
                         </button>
                     </div>
                     </motion.div>
