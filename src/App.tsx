@@ -350,61 +350,93 @@ export default function App() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="fixed inset-0 bg-black/20 z-[-1] md:hidden backdrop-blur-sm"
+                        className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
                     />
                     <motion.div
                         key="mobile-menu"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="absolute top-full left-0 right-0 bg-lime-800 dark:bg-lime-950 shadow-lg md:hidden border-t border-lime-700 dark:border-lime-900 overflow-hidden z-10"
+                        initial={{ opacity: 0, scale: 0.9, y: "-50%", x: "-50%" }}
+                        animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
+                        exit={{ opacity: 0, scale: 0.9, y: "-50%", x: "-50%" }}
+                        transition={{ type: "spring", duration: 0.5 }}
+                        className="fixed top-1/2 left-1/2 w-[90%] max-w-xs bg-white dark:bg-slate-800 shadow-2xl rounded-2xl md:hidden z-50 overflow-hidden border border-lime-100 dark:border-slate-700"
                     >
-                        <div className="flex flex-col p-2 gap-1">
+                        <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-slate-700 bg-lime-50 dark:bg-slate-900/50">
+                            <h2 className="text-lg font-bold text-lime-800 dark:text-lime-400 flex items-center gap-2">
+                                <Menu size={20} /> Μενού
+                            </h2>
+                            <button 
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400 transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        
+                        <div className="flex flex-col p-2 gap-1 max-h-[70vh] overflow-y-auto">
                         <button 
                             onClick={() => { setShowStats(true); setIsMobileMenuOpen(false); }} 
-                            className="flex items-center gap-3 p-3 hover:bg-lime-700 rounded-lg transition-colors text-left"
+                            className="flex items-center gap-3 p-3 hover:bg-lime-50 dark:hover:bg-slate-700 rounded-lg transition-colors text-left text-slate-700 dark:text-slate-200"
                         >
-                            <BarChart3 size={20} /> 
+                            <div className="bg-lime-100 dark:bg-lime-900/30 p-2 rounded-lg text-lime-700 dark:text-lime-400">
+                                <BarChart3 size={20} />
+                            </div>
                             <span className="font-medium">Στατιστικά</span>
                         </button>
                         <button 
                             onClick={() => { setShowEconomics(true); setIsMobileMenuOpen(false); }} 
-                            className="flex items-center gap-3 p-3 hover:bg-lime-700 rounded-lg transition-colors text-left"
+                            className="flex items-center gap-3 p-3 hover:bg-lime-50 dark:hover:bg-slate-700 rounded-lg transition-colors text-left text-slate-700 dark:text-slate-200"
                         >
-                            <Wallet size={20} /> 
+                            <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg text-blue-700 dark:text-blue-400">
+                                <Wallet size={20} />
+                            </div>
                             <span className="font-medium">Οικονομικά</span>
                         </button>
                         <button 
                             onClick={() => { setShowFilters(!showFilters); setIsMobileMenuOpen(false); }} 
-                            className={`flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${showFilters ? 'bg-lime-100 text-lime-900' : 'hover:bg-lime-700'}`}
+                            className={`flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${showFilters ? 'bg-lime-50 dark:bg-slate-700/50' : 'hover:bg-lime-50 dark:hover:bg-slate-700'} text-slate-700 dark:text-slate-200`}
                         >
-                            <Filter size={20} /> 
+                            <div className={`p-2 rounded-lg transition-colors ${showFilters ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400'}`}>
+                                <Filter size={20} />
+                            </div>
                             <span className="font-medium">{showFilters ? 'Απόκρυψη Φίλτρων' : 'Εμφάνιση Φίλτρων'}</span>
                         </button>
                         
-                        <div className="h-px w-full bg-lime-700/50 my-1"></div>
+                        <div className="h-px w-full bg-gray-100 dark:bg-slate-700 my-1"></div>
                         
                         <button 
                             onClick={() => { fileInputRef.current?.click(); setIsMobileMenuOpen(false); }} 
-                            className="flex items-center gap-3 p-3 hover:bg-lime-700 rounded-lg transition-colors text-left"
+                            className="flex items-center gap-3 p-3 hover:bg-lime-50 dark:hover:bg-slate-700 rounded-lg transition-colors text-left text-slate-700 dark:text-slate-200"
                         >
-                            <Upload size={20} /> 
+                            <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg text-purple-700 dark:text-purple-400">
+                                <Upload size={20} />
+                            </div>
                             <span className="font-medium">Εισαγωγή Backup</span>
                         </button>
                         <button 
                             onClick={() => { exportData(); setIsMobileMenuOpen(false); }} 
-                            className="flex items-center gap-3 p-3 hover:bg-lime-700 rounded-lg transition-colors text-left"
+                            className="flex items-center gap-3 p-3 hover:bg-lime-50 dark:hover:bg-slate-700 rounded-lg transition-colors text-left text-slate-700 dark:text-slate-200"
                         >
-                            <Download size={20} /> 
+                            <div className="bg-indigo-100 dark:bg-indigo-900/30 p-2 rounded-lg text-indigo-700 dark:text-indigo-400">
+                                <Download size={20} />
+                            </div>
                             <span className="font-medium">Εξαγωγή Backup (JSON)</span>
                         </button>
                         <button 
                             onClick={() => { handleExcelExport(); setIsMobileMenuOpen(false); }} 
-                            className="flex items-center gap-3 p-3 hover:bg-lime-700 rounded-lg transition-colors text-left"
+                            className="flex items-center gap-3 p-3 hover:bg-lime-50 dark:hover:bg-slate-700 rounded-lg transition-colors text-left text-slate-700 dark:text-slate-200"
                         >
-                            <FileSpreadsheet size={20} /> 
+                            <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg text-green-700 dark:text-green-400">
+                                <FileSpreadsheet size={20} />
+                            </div>
                             <span className="font-medium">Εξαγωγή Excel</span>
                         </button>
+                        
+                        <div className="h-px w-full bg-gray-100 dark:bg-slate-700 my-1"></div>
+                        
+                         <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+                            <span className="font-medium text-sm text-gray-600 dark:text-gray-400">Θέμα</span>
+                            <ThemeToggle />
+                        </div>
                     </div>
                     </motion.div>
                 </>
