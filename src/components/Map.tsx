@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, LayersControl } from 'react-leaflet';
 import L from 'leaflet';
 import { OliveTree } from '../types';
 import { format } from 'date-fns';
-import { Crosshair } from 'lucide-react';
+import { Crosshair, Edit } from 'lucide-react';
 
 // Fix για τα εικονίδια του Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -58,11 +58,12 @@ function LocationMarker({ onLocationFound }: { onLocationFound: (lat: number, ln
 interface MapProps {
   trees: OliveTree[];
   onAddTree: (lat: number, lng: number) => void;
+  onEditTree: (tree: OliveTree) => void;
   userLocation: { lat: number; lng: number } | null;
   setUserLocation: (loc: { lat: number; lng: number }) => void;
 }
 
-export default function Map({ trees, onAddTree, userLocation, setUserLocation }: MapProps) {
+export default function Map({ trees, onAddTree, onEditTree, userLocation, setUserLocation }: MapProps) {
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
 
   const handleAdd = () => {
@@ -83,10 +84,20 @@ export default function Map({ trees, onAddTree, userLocation, setUserLocation }:
         className="h-full w-full"
         ref={setMapInstance}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <LayersControl position="topright">
+            <LayersControl.BaseLayer checked name="Χάρτης Δρόμων">
+                <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+            </LayersControl.BaseLayer>
+            <LayersControl.BaseLayer name="Δορυφορικός">
+                <TileLayer
+                attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                />
+            </LayersControl.BaseLayer>
+        </LayersControl>
         
         <LocationMarker onLocationFound={(lat, lng) => setUserLocation({ lat, lng })} />
 
@@ -105,7 +116,20 @@ export default function Map({ trees, onAddTree, userLocation, setUserLocation }:
                 <p className="font-bold">{tree.variety.toUpperCase()}</p>
                 <p>Υγεία: {tree.health}</p>
                 <p>Εκτίμηση: {tree.yieldEstimate}kg</p>
-                <p className="text-gray-500 text-xs">{format(new Date(tree.dateAdded), 'dd/MM/yyyy')}</p>
+                {tree.notes && <p className="italic text-gray-600">{tree.notes}</p>}
+                {tree.photoUrl && (
+                    <div className="mt-2 mb-2 w-full h-32 overflow-hidden rounded-md">
+                        <img src={tree.photoUrl} alt="Tree" className="w-full h-full object-cover" />
+                    </div>
+                )}
+                <p className="text-gray-500 text-xs mb-2">{format(new Date(tree.dateAdded), 'dd/MM/yyyy')}</p>
+                <button 
+                    onClick={() => onEditTree(tree)}
+                    className="w-full bg-blue-100 text-blue-700 py-1 px-2 rounded flex items-center justify-center gap-1 hover:bg-blue-200 transition-colors"
+                >
+                    <Edit size={14} />
+                    Επεξεργασία
+                </button>
               </div>
             </Popup>
           </Marker>

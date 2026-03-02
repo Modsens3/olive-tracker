@@ -9,6 +9,7 @@ export interface OliveTree {
   health: TreeHealth;
   yieldEstimate: number; // σε κιλά
   notes: string;
+  photoUrl?: string;
   dateAdded: string;
 }
 

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Download, Trees, Sprout, Save, X } from 'lucide-react';
+import { Download, Sprout, Filter } from 'lucide-react';
 import Map from './components/Map';
+import TreeForm from './components/TreeForm';
 import { OliveTree, TreeVariety, TreeHealth } from './types';
 
-function App() {
+export default function App() {
   const [trees, setTrees] = useState<OliveTree[]>(() => {
     const saved = localStorage.getItem('olive_trees');
     return saved ? JSON.parse(saved) : [];
@@ -13,12 +14,12 @@ function App() {
   const [showForm, setShowForm] = useState(false);
   const [newTreeLoc, setNewTreeLoc] = useState<{lat: number, lng: number} | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [editingTreeId, setEditingTreeId] = useState<string | null>(null);
 
-  // Form State
-  const [variety, setVariety] = useState<TreeVariety>('koroneiki');
-  const [health, setHealth] = useState<TreeHealth>('good');
-  const [yieldEstimate, setYieldEstimate] = useState<string>('');
-  const [notes, setNotes] = useState('');
+  // Filters
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterVariety, setFilterVariety] = useState<TreeVariety | 'all'>('all');
+  const [filterHealth, setFilterHealth] = useState<TreeHealth | 'all'>('all');
 
   useEffect(() => {
     localStorage.setItem('olive_trees', JSON.stringify(trees));
@@ -26,33 +27,46 @@ function App() {
 
   const handleAddTreeStart = (lat: number, lng: number) => {
     setNewTreeLoc({ lat, lng });
+    setEditingTreeId(null);
     setShowForm(true);
   };
 
-  const handleSaveTree = () => {
-    if (!newTreeLoc) return;
-    
-    const newTree: OliveTree = {
-      id: uuidv4(),
-      lat: newTreeLoc.lat,
-      lng: newTreeLoc.lng,
-      variety,
-      health,
-      yieldEstimate: Number(yieldEstimate) || 0,
-      notes,
-      dateAdded: new Date().toISOString()
-    };
-
-    setTrees([...trees, newTree]);
-    setShowForm(false);
-    resetForm();
+  const handleEditTreeStart = (tree: OliveTree) => {
+    setEditingTreeId(tree.id);
+    setShowForm(true);
   };
 
-  const resetForm = () => {
-    setVariety('koroneiki');
-    setHealth('good');
-    setYieldEstimate('');
-    setNotes('');
+  const handleSaveTree = (data: Omit<OliveTree, 'id' | 'dateAdded' | 'lat' | 'lng'>) => {
+    if (editingTreeId) {
+      // Update existing tree
+      setTrees(trees.map(t => 
+        t.id === editingTreeId 
+          ? { ...t, ...data }
+          : t
+      ));
+    } else if (newTreeLoc) {
+      // Add new tree
+      const newTree: OliveTree = {
+        id: uuidv4(),
+        lat: newTreeLoc.lat,
+        lng: newTreeLoc.lng,
+        ...data,
+        dateAdded: new Date().toISOString()
+      };
+      setTrees([...trees, newTree]);
+    }
+    
+    setShowForm(false);
+    setNewTreeLoc(null);
+    setEditingTreeId(null);
+  };
+
+  const handleDeleteTree = () => {
+    if (editingTreeId) {
+        setTrees(trees.filter(t => t.id !== editingTreeId));
+        setShowForm(false);
+        setEditingTreeId(null);
+    }
   };
 
   const exportData = () => {
@@ -67,27 +81,90 @@ function App() {
     linkElement.click();
   };
 
-  const totalYield = trees.reduce((acc, curr) => acc + curr.yieldEstimate, 0);
+  const filteredTrees = trees.filter(tree => {
+    if (filterVariety !== 'all' && tree.variety !== filterVariety) return false;
+    if (filterHealth !== 'all' && tree.health !== filterHealth) return false;
+    return true;
+  });
+
+  const totalYield = filteredTrees.reduce((acc, curr) => acc + curr.yieldEstimate, 0);
+
+  const editingTree = editingTreeId ? trees.find(t => t.id === editingTreeId) : undefined;
 
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-50 overflow-hidden">
       {/* Header */}
-      <header className="bg-lime-800 text-white p-4 shadow-md flex justify-between items-center z-10">
+      <header className="bg-lime-800 text-white p-4 shadow-md flex justify-between items-center z-10 relative">
         <div className="flex items-center gap-2">
             <Sprout size={24} />
             <h1 className="text-xl font-bold">Olive Tracker</h1>
         </div>
-        <button onClick={exportData} className="bg-lime-700 hover:bg-lime-600 p-2 rounded-md flex items-center gap-2 text-sm">
-            <Download size={16} />
-            <span className="hidden sm:inline">Εξαγωγή</span>
-        </button>
+        <div className="flex gap-2">
+            <button 
+                onClick={() => setShowFilters(!showFilters)} 
+                className={`p-2 rounded-md flex items-center gap-2 text-sm transition-colors ${showFilters ? 'bg-white text-lime-800' : 'bg-lime-700 hover:bg-lime-600'}`}
+            >
+                <Filter size={16} />
+                <span className="hidden sm:inline">Φίλτρα</span>
+            </button>
+            <button onClick={exportData} className="bg-lime-700 hover:bg-lime-600 p-2 rounded-md flex items-center gap-2 text-sm">
+                <Download size={16} />
+                <span className="hidden sm:inline">Εξαγωγή</span>
+            </button>
+        </div>
       </header>
+
+      {/* Filter Panel */}
+      {showFilters && (
+        <div className="bg-lime-100 p-4 shadow-inner z-10 animate-in slide-in-from-top-2">
+            <div className="flex flex-col sm:flex-row gap-4 max-w-4xl mx-auto items-center">
+                <div className="w-full sm:w-auto flex-1">
+                    <label className="block text-xs font-bold text-lime-800 mb-1">Ποικιλία</label>
+                    <select 
+                        value={filterVariety} 
+                        onChange={(e) => setFilterVariety(e.target.value as TreeVariety | 'all')}
+                        className="w-full p-2 rounded border border-lime-300 text-sm"
+                    >
+                        <option value="all">Όλες</option>
+                        <option value="koroneiki">Κορωνέικη</option>
+                        <option value="kalamon">Καλαμών</option>
+                        <option value="manaki">Μανάκι</option>
+                        <option value="other">Άλλη</option>
+                    </select>
+                </div>
+                <div className="w-full sm:w-auto flex-1">
+                    <label className="block text-xs font-bold text-lime-800 mb-1">Υγεία</label>
+                    <select 
+                        value={filterHealth} 
+                        onChange={(e) => setFilterHealth(e.target.value as TreeHealth | 'all')}
+                        className="w-full p-2 rounded border border-lime-300 text-sm"
+                    >
+                        <option value="all">Όλες</option>
+                        <option value="good">Καλή 🟢</option>
+                        <option value="average">Μέτρια 🟡</option>
+                        <option value="poor">Κακή 🔴</option>
+                    </select>
+                </div>
+                {(filterVariety !== 'all' || filterHealth !== 'all') && (
+                    <button 
+                        onClick={() => {
+                            setFilterVariety('all');
+                            setFilterHealth('all');
+                        }}
+                        className="mt-4 sm:mt-0 text-lime-800 underline text-sm"
+                    >
+                        Καθαρισμός
+                    </button>
+                )}
+            </div>
+        </div>
+      )}
 
       {/* Stats Bar */}
       <div className="bg-white p-2 flex justify-around items-center border-b text-sm text-gray-700 z-10">
         <div className="flex flex-col items-center">
-            <span className="font-bold text-lg">{trees.length}</span>
-            <span className="text-xs text-gray-500">Δέντρα</span>
+            <span className="font-bold text-lg">{filteredTrees.length}</span>
+            <span className="text-xs text-gray-500">Δέντρα {showFilters && filteredTrees.length !== trees.length ? `(από ${trees.length})` : ''}</span>
         </div>
         <div className="flex flex-col items-center">
             <span className="font-bold text-lg text-lime-700">{totalYield} kg</span>
@@ -98,90 +175,28 @@ function App() {
       {/* Map Area */}
       <div className="flex-1 relative z-0">
         <Map 
-            trees={trees} 
+            trees={filteredTrees} 
             onAddTree={handleAddTreeStart} 
+            onEditTree={handleEditTreeStart}
             userLocation={userLocation}
             setUserLocation={setUserLocation}
         />
       </div>
 
-      {/* Add Tree Modal/Drawer */}
+      {/* Add/Edit Tree Modal */}
       {showForm && (
-        <div className="absolute inset-0 z-[2000] bg-black/50 flex items-end sm:items-center justify-center p-4 backdrop-blur-sm">
-            <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl animate-in slide-in-from-bottom-10">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                        <Trees className="text-lime-600" />
-                        Νέο Δέντρο
-                    </h2>
-                    <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
-                        <X size={24} />
-                    </button>
-                </div>
-
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Ποικιλία</label>
-                        <select 
-                            value={variety} 
-                            onChange={(e) => setVariety(e.target.value as TreeVariety)}
-                            className="w-full p-2 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-lime-500 outline-none"
-                        >
-                            <option value="koroneiki">Κορωνέικη</option>
-                            <option value="kalamon">Καλαμών</option>
-                            <option value="manaki">Μανάκι</option>
-                            <option value="other">Άλλη</option>
-                        </select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Κατάσταση</label>
-                            <select 
-                                value={health} 
-                                onChange={(e) => setHealth(e.target.value as TreeHealth)}
-                                className="w-full p-2 border rounded-lg bg-slate-50 outline-none"
-                            >
-                                <option value="good">Καλή 🟢</option>
-                                <option value="average">Μέτρια 🟡</option>
-                                <option value="poor">Κακή 🔴</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Εκτίμηση (kg)</label>
-                            <input 
-                                type="number" 
-                                value={yieldEstimate}
-                                onChange={(e) => setYieldEstimate(e.target.value)}
-                                placeholder="0"
-                                className="w-full p-2 border rounded-lg bg-slate-50 outline-none"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Σημειώσεις</label>
-                        <textarea 
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            className="w-full p-2 border rounded-lg bg-slate-50 outline-none h-20 resize-none"
-                            placeholder="π.χ. θέλει κλάδεμα..."
-                        />
-                    </div>
-
-                    <button 
-                        onClick={handleSaveTree}
-                        className="w-full bg-lime-600 text-white py-3 rounded-xl font-bold text-lg hover:bg-lime-700 transition-colors flex items-center justify-center gap-2 mt-2"
-                    >
-                        <Save size={20} />
-                        Αποθήκευση
-                    </button>
-                </div>
-            </div>
-        </div>
+        <TreeForm 
+            initialData={editingTree}
+            onSave={handleSaveTree}
+            onCancel={() => {
+                setShowForm(false);
+                setEditingTreeId(null);
+                setNewTreeLoc(null);
+            }}
+            onDelete={editingTreeId ? handleDeleteTree : undefined}
+            isNew={!editingTreeId}
+        />
       )}
     </div>
   );
 }
-
-export default App;
