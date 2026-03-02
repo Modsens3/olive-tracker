@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Download, Sprout, Filter } from 'lucide-react';
+import { Download, Sprout, Filter, Upload, BarChart3 } from 'lucide-react';
 import Map from './components/Map';
 import TreeForm from './components/TreeForm';
+import Stats from './components/Stats';
 import { OliveTree, TreeVariety, TreeHealth } from './types';
 
 export default function App() {
@@ -12,9 +13,11 @@ export default function App() {
   });
   
   const [showForm, setShowForm] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const [newTreeLoc, setNewTreeLoc] = useState<{lat: number, lng: number} | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [editingTreeId, setEditingTreeId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Filters
   const [showFilters, setShowFilters] = useState(false);
@@ -81,6 +84,33 @@ export default function App() {
     linkElement.click();
   };
 
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = event.target?.result as string;
+        const importedTrees = JSON.parse(json);
+        if (Array.isArray(importedTrees)) {
+          if (window.confirm(`Βρέθηκαν ${importedTrees.length} δέντρα. Θέλετε να αντικαταστήσετε τα υπάρχοντα δεδομένα;`)) {
+            setTrees(importedTrees);
+            alert('Η εισαγωγή ολοκληρώθηκε επιτυχώς!');
+          }
+        } else {
+          alert('Το αρχείο δεν έχει τη σωστή μορφή.');
+        }
+      } catch (error) {
+        console.error('Error importing data:', error);
+        alert('Σφάλμα κατά την ανάγνωση του αρχείου.');
+      }
+    };
+    reader.readAsText(file);
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const filteredTrees = trees.filter(tree => {
     if (filterVariety !== 'all' && tree.variety !== filterVariety) return false;
     if (filterHealth !== 'all' && tree.health !== filterHealth) return false;
@@ -97,19 +127,47 @@ export default function App() {
       <header className="bg-lime-800 text-white p-4 shadow-md flex justify-between items-center z-10 relative">
         <div className="flex items-center gap-2">
             <Sprout size={24} />
-            <h1 className="text-xl font-bold">Olive Tracker</h1>
+            <h1 className="text-xl font-bold hidden sm:block">Olive Tracker</h1>
         </div>
         <div className="flex gap-2">
             <button 
+                onClick={() => setShowStats(true)} 
+                className="bg-lime-700 hover:bg-lime-600 p-2 rounded-md flex items-center gap-2 text-sm"
+                title="Στατιστικά"
+            >
+                <BarChart3 size={20} />
+            </button>
+            <button 
                 onClick={() => setShowFilters(!showFilters)} 
                 className={`p-2 rounded-md flex items-center gap-2 text-sm transition-colors ${showFilters ? 'bg-white text-lime-800' : 'bg-lime-700 hover:bg-lime-600'}`}
+                title="Φίλτρα"
             >
-                <Filter size={16} />
-                <span className="hidden sm:inline">Φίλτρα</span>
+                <Filter size={20} />
             </button>
-            <button onClick={exportData} className="bg-lime-700 hover:bg-lime-600 p-2 rounded-md flex items-center gap-2 text-sm">
-                <Download size={16} />
-                <span className="hidden sm:inline">Εξαγωγή</span>
+            
+            <div className="h-8 w-px bg-lime-600 mx-1"></div>
+
+            <button 
+                onClick={() => fileInputRef.current?.click()} 
+                className="bg-lime-700 hover:bg-lime-600 p-2 rounded-md flex items-center gap-2 text-sm"
+                title="Εισαγωγή Backup"
+            >
+                <Upload size={20} />
+            </button>
+            <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleImport} 
+                accept=".json" 
+                className="hidden" 
+            />
+
+            <button 
+                onClick={exportData} 
+                className="bg-lime-700 hover:bg-lime-600 p-2 rounded-md flex items-center gap-2 text-sm"
+                title="Εξαγωγή Backup"
+            >
+                <Download size={20} />
             </button>
         </div>
       </header>
@@ -182,6 +240,14 @@ export default function App() {
             setUserLocation={setUserLocation}
         />
       </div>
+
+      {/* Stats Modal */}
+      {showStats && (
+        <Stats 
+            trees={trees} 
+            onClose={() => setShowStats(false)} 
+        />
+      )}
 
       {/* Add/Edit Tree Modal */}
       {showForm && (
