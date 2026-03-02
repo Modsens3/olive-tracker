@@ -20,7 +20,74 @@
 ::-webkit-scrollbar-track {
   background: #f1f1f1;
 }
+.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
 ::-webkit-scrollbar-thumb {
   background: #888;
   border-radius: 3px;
 }
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+/* Dark mode overrides for Leaflet */
+.dark .leaflet-popup-content-wrapper,
+.dark .leaflet-popup-tip {
+    background-color: #1e293b; /* slate-800 */
+    color: #e2e8f0; /* slate-200 */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+.dark .leaflet-popup-content {
+    color: #e2e8f0; /* slate-200 */
+}
+.dark .leaflet-popup-close-button {
+    color: #cbd5e1 !important; /* slate-300 */
+}
+.dark .leaflet-bar a {
+    background-color: #1e293b;
+    color: #e2e8f0;
+    border-color: #475569; /* slate-600 */
+}
+.dark .leaflet-bar a:hover {
+    background-color: #334155; /* slate-700 */
+    color: #fff;
+}
+.dark .leaflet-control-layers {
+    background-color: #1e293b;
+    color: #e2e8f0;
+    border-color: #475569;
+}
+.dark .leaflet-control-zoom-in,
+.dark .leaflet-control-zoom-out {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-bottom-color: #475569 !important;
+}
+
+.dark .leaflet-tooltip {
+    background-color: #1e293b;
+    color: #e2e8f0;
+    border-color: #475569;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+}
+.dark .leaflet-tooltip-top:before { border-top-color: #475569; }
+.dark .leaflet-tooltip-bottom:before { border-bottom-color: #475569; }
+.dark .leaflet-tooltip-left:before { border-left-color: #475569; }
+.dark .leaflet-tooltip-right:before { border-right-color: #475569; }
+/* Note: The arrow color should match the border color for the outline, 
+   but since Leaflet tooltips have a background, we might need to target the :after pseudo for the fill color.
+   Leaflet default CSS uses border for the arrow shape.
+   Actually, Leaflet uses only one pseudo-element for the arrow usually.
+   Let's just stick to the main box styling. The arrow is a nice-to-have detail.
+*/
+
+/* Dark mode map tiles filter - moved to component specific class */
+/* .dark .leaflet-tile-pane {
+    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+} */
+/* Revert filter for satellite view if needed - logic handled in Map.tsx via conditional class or just keep simple */
+/* If we use .leaflet-tile-pane, it applies to ALL tile layers. 
+   If we switch to Satellite, we probably don't want inversion.
+   We can handle this by toggling a class on the map container in React.
+*/
