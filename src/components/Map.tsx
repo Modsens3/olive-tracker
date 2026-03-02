@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { OliveTree } from '../types';
 import { format } from 'date-fns';
+import { Crosshair } from 'lucide-react';
 
 // Fix για τα εικονίδια του Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -62,9 +63,26 @@ interface MapProps {
 }
 
 export default function Map({ trees, onAddTree, userLocation, setUserLocation }: MapProps) {
+  const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
+
+  const handleAdd = () => {
+    if (mapInstance) {
+      const center = mapInstance.getCenter();
+      onAddTree(center.lat, center.lng);
+    } else if (userLocation) {
+      onAddTree(userLocation.lat, userLocation.lng);
+    }
+  };
+
   return (
     <div className="h-full w-full relative">
-      <MapContainer center={[38.0, 23.7]} zoom={6} scrollWheelZoom={true} className="h-full w-full">
+      <MapContainer 
+        center={[38.0, 23.7]} 
+        zoom={6} 
+        scrollWheelZoom={true} 
+        className="h-full w-full"
+        ref={setMapInstance}
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -94,17 +112,23 @@ export default function Map({ trees, onAddTree, userLocation, setUserLocation }:
         ))}
       </MapContainer>
       
+      {/* Κεντρικός Στόχος (Crosshair) */}
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[1000] pointer-events-none text-lime-600">
+        <Crosshair size={40} strokeWidth={1.5} />
+      </div>
+
       {/* Κουμπί Προσθήκης */}
       <button 
-        onClick={() => userLocation && onAddTree(userLocation.lat, userLocation.lng)}
-        className="absolute bottom-24 right-4 z-[1000] bg-lime-600 text-white p-4 rounded-full shadow-lg hover:bg-lime-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-        disabled={!userLocation}
+        onClick={handleAdd}
+        className="absolute bottom-24 right-4 z-[1000] bg-lime-600 text-white p-4 rounded-full shadow-lg hover:bg-lime-700 transition-colors flex items-center justify-center"
       >
         <span className="text-2xl font-bold">+</span>
       </button>
+      
       {!userLocation && (
-          <div className="absolute bottom-24 right-20 z-[1000] bg-white px-3 py-1 rounded shadow text-xs text-gray-600">
-              Αναμονή GPS...
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-white/90 px-3 py-1 rounded-full shadow text-xs text-gray-600 flex items-center gap-2">
+              <span className="animate-pulse w-2 h-2 bg-orange-500 rounded-full"></span>
+              Αναμονή GPS - Σύρετε το χάρτη στο σημείο
           </div>
       )}
     </div>
